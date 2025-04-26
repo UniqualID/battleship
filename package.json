@@ -10,10 +10,6 @@
 		"build": "webpack",
 		"deploy": "git subtree push --prefix dist origin gh-pages"
 	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/MisterCage840/TemplateRepo.git"
-	},
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
