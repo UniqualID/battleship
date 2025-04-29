@@ -1,1 +1,3 @@
-console.log("Hello, world!");
+import './reset.css';
+import './styles.css';
+import './modules/ui.js';
