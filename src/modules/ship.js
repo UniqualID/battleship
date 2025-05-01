@@ -1,17 +1,18 @@
 class Ship {
-  constructor(length, orientation = 'horizontal') {
-    this.length = length;
-    this.orientation = orientation;
-    this.timesHit = 0;
-  }
+    constructor(length, orientation = 'horizontal') {
+        this.length = length;
+        this.orientation = orientation;
+        this.timesHit = 0;
+        this.id = crypto.randomUUID();
+    }
 
-  hit() {
-    this.timesHit++;
-  }
+    hit() {
+        this.timesHit++;
+    }
 
-  isSunk() {
-    return this.timesHit == this.length;
-  }
+    isSunk() {
+        return this.timesHit == this.length;
+    }
 }
 
 export { Ship };
