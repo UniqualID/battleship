@@ -3,6 +3,7 @@ import { Gameboard } from './gameboard.js';
 import { Ship } from './ship.js';
 import { BOARDSIZE } from './constants.js';
 
+const DEBUGSHOWALLBOARDS = true;
 const elements = {
     main: document.querySelector('main'),
     board1: document.querySelector('#player1board'),
@@ -32,7 +33,7 @@ function create(tag, className, text, children) {
     return el;
 }
 
-function createBoardUI(boardElement, gameboard) {
+function createBoardUI(boardElement, gameboard, showOccupied = true) {
     // Clear current board
     boardElement.innerHTML = '';
 
@@ -49,8 +50,18 @@ function createBoardUI(boardElement, gameboard) {
             let cell = create('div', 'boardcell');
             cell.dataset.i = i;
             cell.dataset.j = j;
-            if (gameboard.coordsIsOccupied(i, j)) {
+            if (
+                (showOccupied || DEBUGSHOWALLBOARDS) &&
+                gameboard.coordsIsOccupied(i, j)
+            ) {
                 cell.classList.add('occupied');
+            }
+
+            if (gameboard.coordsIsMiss(i, j)) {
+                cell.classList.add('miss');
+            }
+            if (gameboard.coordsIsHit(i, j)) {
+                cell.classList.add('hit');
             }
             cells.push(cell);
         }
@@ -243,11 +254,90 @@ function setupThemeSwitch() {
         darkmode !== 'active' ? enableDarkmode() : disableDarkmode();
     });
 }
+
+function playgame() {
+    return new Promise(async (resolve, reject) => {
+        console.log('here');
+        function getWinner() {
+            if (
+                gameState.board1.ships.length ===
+                gameState.board1.sunkShips.length
+            )
+                return 'player 2';
+            else if (
+                gameState.board2.ships.length ===
+                gameState.board2.sunkShips.length
+            )
+                return 'player 1';
+            else return null;
+        }
+
+        while (true) {
+            let [x, y] = await gameState.player1.nextMove();
+            gameState.board2.receiveAttack(x, y);
+            createBoardUI(elements.board2, gameState.board2);
+            if (getWinner()) break;
+
+            [x, y] = await gameState.player2.nextMove();
+            gameState.board1.receiveAttack(x, y);
+            createBoardUI(elements.board1, gameState.board1);
+            if (getWinner()) break;
+        }
+
+        resolve(getWinner());
+    });
+}
 async function init() {
     gameState.board1 = new Gameboard();
     gameState.board2 = new Gameboard();
-    gameState.player1 = new Player('Player 1', gameState.board1);
-    gameState.player2 = new Player('Player 2', gameState.board2);
+    [
+        [new Ship(2, 'horizontal'), [0, 0]],
+        [new Ship(2, 'vertical'), [0, 8]],
+        [new Ship(3, 'horizontal'), [4, 5]],
+        [new Ship(4, 'horizontal'), [10, 1]],
+        [new Ship(5, 'vertical'), [7, 11]],
+    ].forEach(([ship, coords]) => gameState.board2.placeShip(ship, coords));
+
+    // Player 1 nextMove should just be whatever the user clicks on
+    gameState.player1 = new Player('Player 1', gameState.board1, function () {
+        return new Promise((resolve) => {
+            elements.board2.addEventListener(
+                'click',
+                (e) => {
+                    if (!e.target.classList.contains('boardcell')) return;
+                    let [x, y] = [e.target.dataset.i, e.target.dataset.j];
+                    console.log(`User selected cell ${x}, ${y}`);
+                    if (gameState.board2.coordsIsHit(x, y)) {
+                        alert('Cannot select an already hit coordinate!');
+                        return;
+                    }
+                    resolve([x, y]);
+                },
+                { once: true },
+            );
+        });
+    });
+
+    // Player 2 nextMove, simple random selection but can do a battleship-specific AI later!
+    let movesAr = Array.from({ length: BOARDSIZE }, (_, x) =>
+        Array.from({ length: BOARDSIZE }, (_, y) => [x, y]),
+    ).flat();
+    console.log(movesAr);
+    function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1)); // 0 ≤ j ≤ i
+            [arr[i], arr[j]] = [arr[j], arr[i]]; // swap
+        }
+        return arr;
+    }
+
+    let shuffledMoves = shuffle(movesAr);
+    let shuffleMoveIdx = 0;
+    gameState.player2 = new Player(
+        'Player 2',
+        gameState.board2,
+        () => shuffledMoves[shuffleMoveIdx++],
+    );
     createBoardUI(elements.board1, gameState.board1);
     createBoardUI(elements.board2, gameState.board2);
 
@@ -257,6 +347,11 @@ async function init() {
 
     await setupdrag();
     console.log('Piece setup complete. Initiating game.');
+
+    let winner = await playgame();
+    console.log(`Winner: ${winner}`);
+
+    elements.boardpieces.innerHTML = `<p><i>Winner! ${winner} wins!`;
 }
 
 document.addEventListener('DOMContentLoaded', init);

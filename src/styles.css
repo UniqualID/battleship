@@ -126,6 +126,9 @@ main {
 
 .boardcell {
 	border: 1px solid var(--text-clr);
+	display: flex;
+	align-items: center;
+	justify-content: center;
 
 	&.hover {
 		background-color: var(--secondary-text-clr)
@@ -133,6 +136,14 @@ main {
 
 	&.occupied {
 		background-color: var(--text-clr)
+	}
+
+	&.miss::after {
+		content: '💦'
+	}
+
+	&.hit::after {
+		content: '🔥'
 	}
 }
 

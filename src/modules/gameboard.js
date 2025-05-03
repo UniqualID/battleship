@@ -6,6 +6,7 @@ class Gameboard {
             Array(BOARDSIZE).fill(null),
         );
         this.ships = [];
+        this.hitAttacks = new Set();
         this.missedAttacks = new Set();
         this.sunkShips = [];
     }
@@ -45,11 +46,30 @@ class Gameboard {
             if (this.board[x][y].isSunk()) {
                 this.sunkShips.push(this.board[x][y]);
             }
+            this.hitAttacks.add(`${x},${y}`);
             return true; // Hit
         } else {
             this.missedAttacks.add(`${x},${y}`);
             return false; // Miss
         }
+    }
+    coordsIsMiss(x, y) {
+        return (
+            0 <= x &&
+            x < BOARDSIZE &&
+            0 <= y &&
+            y < BOARDSIZE &&
+            this.missedAttacks.has(`${x},${y}`)
+        );
+    }
+    coordsIsHit(x, y) {
+        return (
+            0 <= x &&
+            x < BOARDSIZE &&
+            0 <= y &&
+            y < BOARDSIZE &&
+            this.hitAttacks.has(`${x},${y}`)
+        );
     }
     coordsIsOccupied(x, y) {
         return (
