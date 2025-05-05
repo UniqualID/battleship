@@ -336,7 +336,13 @@ async function init() {
     gameState.player2 = new Player(
         'Player 2',
         gameState.board2,
-        () => shuffledMoves[shuffleMoveIdx++],
+        () =>
+            new Promise((resolve) =>
+                setTimeout(
+                    () => resolve(shuffledMoves[shuffleMoveIdx++]),
+                    1000,
+                ),
+            ),
     );
     createBoardUI(elements.board1, gameState.board1);
     createBoardUI(elements.board2, gameState.board2);
